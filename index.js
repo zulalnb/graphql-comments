@@ -112,6 +112,11 @@ const typeDefs = `#graphql
     postCreated: Post!
     postUpdated: Post!
     postDeleted: Post!
+
+    # Comment
+    commentCreated: Comment!
+    commentUpdated: Comment!
+    commentDeleted: Comment!
   }
 `;
 
@@ -139,6 +144,17 @@ const resolvers = {
     },
     postDeleted: {
       subscribe: (_, __, { pubSub }) => pubSub.subscribe("postDeleted"),
+    },
+
+    // Comment
+    commentCreated: {
+      subscribe: (_, __, { pubSub }) => pubSub.subscribe("commentCreated"),
+    },
+    commentUpdated: {
+      subscribe: (_, __, { pubSub }) => pubSub.subscribe("commentUpdated"),
+    },
+    commentDeleted: {
+      subscribe: (_, __, { pubSub }) => pubSub.subscribe("commentDeleted"),
     },
   },
   Mutation: {
@@ -231,12 +247,15 @@ const resolvers = {
     },
 
     // Comment
-    createComment: (_, { data }) => {
+    createComment: (_, { data }, { pubSub }) => {
       const comment = { id: nanoid(), ...data };
       comments.push(comment);
+
+      pubSub.publish("commentCreated", { commentCreated: comment });
+
       return comment;
     },
-    updateComment: (_, { id, data }) => {
+    updateComment: (_, { id, data }, { pubSub }) => {
       const comment_index = comments.findIndex((comment) => comment.id === id);
       if (comment_index === -1) {
         throw new Error("Comment not found.");
@@ -246,9 +265,12 @@ const resolvers = {
         ...comments[comment_index],
         ...data,
       });
+
+      pubSub.publish("commentUpdated", { commentUpdated: updated_comment });
+
       return updated_comment;
     },
-    deleteComment: (_, { id }) => {
+    deleteComment: (_, { id }, { pubSub }) => {
       const comment_index = comments.findIndex((comment) => comment.id === id);
 
       if (comment_index === -1) {
@@ -257,6 +279,8 @@ const resolvers = {
 
       const deleted_comment = comments[comment_index];
       comments.splice(comment_index, 1);
+
+      pubSub.publish("commentDeleted", { commentDeleted: deleted_comment });
 
       return deleted_comment;
     },
