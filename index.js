@@ -147,7 +147,12 @@ const resolvers = {
       subscribe: (_, __, { pubSub }) => pubSub.subscribe("postDeleted"),
     },
     postCount: {
-      subscribe: (_, __, { pubSub }) => pubSub.subscribe("postCount"),
+      subscribe: (_, __, { pubSub }) => {
+        setTimeout(() => {
+          pubSub.publish("postCount", { postCount: posts.length });
+        });
+        return pubSub.subscribe("postCount");
+      },
     },
 
     // Comment
