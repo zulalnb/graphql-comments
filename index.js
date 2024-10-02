@@ -112,6 +112,7 @@ const typeDefs = `#graphql
     postCreated: Post!
     postUpdated: Post!
     postDeleted: Post!
+    postCount: Int!
 
     # Comment
     commentCreated: Comment!
@@ -144,6 +145,9 @@ const resolvers = {
     },
     postDeleted: {
       subscribe: (_, __, { pubSub }) => pubSub.subscribe("postDeleted"),
+    },
+    postCount: {
+      subscribe: (_, __, { pubSub }) => pubSub.subscribe("postCount"),
     },
 
     // Comment
@@ -208,6 +212,7 @@ const resolvers = {
       posts.push(post);
 
       pubSub.publish("postCreated", { postCreated: post });
+      pubSub.publish("postCount", { postCount: posts.length });
 
       return post;
     },
@@ -237,12 +242,14 @@ const resolvers = {
       posts.splice(post_index, 1);
 
       pubSub.publish("postDeleted", { postDeleted: deleted_post });
+      pubSub.publish("postCount", { postCount: posts.length });
 
       return deleted_post;
     },
-    deleteAllPosts: () => {
+    deleteAllPosts: (_, __, { pubSub }) => {
       const length = posts.length;
       posts.splice(0, length);
+      pubSub.publish("postCount", { postCount: posts.length });
       return { count: length };
     },
 
