@@ -103,9 +103,15 @@ const typeDefs = `#graphql
   }
 
   type Subscription {
+    # User
     userCreated: User!
     userUpdated: User!
     userDeleted: User!
+
+    # Post
+    postCreated: Post!
+    postUpdated: Post!
+    postDeleted: Post!
   }
 `;
 
@@ -113,6 +119,7 @@ const pubSub = createPubSub();
 
 const resolvers = {
   Subscription: {
+    // User
     userCreated: {
       subscribe: (_, __, { pubSub }) => pubSub.subscribe("userCreated"),
     },
@@ -121,6 +128,17 @@ const resolvers = {
     },
     userDeleted: {
       subscribe: (_, __, { pubSub }) => pubSub.subscribe("userDeleted"),
+    },
+
+    // Post
+    postCreated: {
+      subscribe: (_, __, { pubSub }) => pubSub.subscribe("postCreated"),
+    },
+    postUpdated: {
+      subscribe: (_, __, { pubSub }) => pubSub.subscribe("postUpdated"),
+    },
+    postDeleted: {
+      subscribe: (_, __, { pubSub }) => pubSub.subscribe("postDeleted"),
     },
   },
   Mutation: {
@@ -169,12 +187,15 @@ const resolvers = {
     },
 
     // Post
-    createPost: (_, { data }) => {
+    createPost: (_, { data }, { pubSub }) => {
       const post = { id: nanoid(), ...data };
       posts.push(post);
+
+      pubSub.publish("postCreated", { postCreated: post });
+
       return post;
     },
-    updatePost: (_, { id, data }) => {
+    updatePost: (_, { id, data }, { pubSub }) => {
       const post_index = posts.findIndex((post) => post.id === id);
       if (post_index === -1) {
         throw new Error("Post not found.");
@@ -184,9 +205,12 @@ const resolvers = {
         ...posts[post_index],
         ...data,
       });
+
+      pubSub.publish("postUpdated", { postUpdated: updated_post });
+
       return updated_post;
     },
-    deletePost: (_, { id }) => {
+    deletePost: (_, { id }, { pubSub }) => {
       const post_index = posts.findIndex((post) => post.id === id);
 
       if (post_index === -1) {
@@ -195,6 +219,8 @@ const resolvers = {
 
       const deleted_post = posts[post_index];
       posts.splice(post_index, 1);
+
+      pubSub.publish("postDeleted", { postDeleted: deleted_post });
 
       return deleted_post;
     },
