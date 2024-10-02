@@ -1,6 +1,8 @@
-import { ApolloServer } from "@apollo/server";
-import { startStandaloneServer } from "@apollo/server/standalone";
+import { createServer } from "node:http";
+import { createPubSub, createSchema, createYoga } from "graphql-yoga";
+
 import { nanoid } from "nanoid";
+
 import { users, posts, comments } from "./data.js";
 
 const typeDefs = `#graphql
@@ -241,13 +243,16 @@ const resolvers = {
   },
 };
 
-const server = new ApolloServer({
-  typeDefs,
-  resolvers,
+const pubSub = createPubSub();
+
+const yoga = createYoga({
+  schema: createSchema({
+    resolvers,
+    typeDefs,
+  }),
+  logging: true,
+  context: { pubSub },
 });
 
-const { url } = await startStandaloneServer(server, {
-  listen: { port: 4000 },
-});
-
-console.log(`🚀  Server ready at: ${url}`);
+const server = createServer(yoga);
+server.listen(4000, () => console.log("Server started on port 4000"));
