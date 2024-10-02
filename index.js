@@ -101,17 +101,39 @@ const typeDefs = `#graphql
     deleteComment(id: ID!): Comment!
     deleteAllComments: DeleteAllOutput!
   }
+
+  type Subscription {
+    userCreated: User!
+    userUpdated: User!
+    userDeleted: User!
+  }
 `;
 
+const pubSub = createPubSub();
+
 const resolvers = {
+  Subscription: {
+    userCreated: {
+      subscribe: (_, __, { pubSub }) => pubSub.subscribe("userCreated"),
+    },
+    userUpdated: {
+      subscribe: (_, __, { pubSub }) => pubSub.subscribe("userUpdated"),
+    },
+    userDeleted: {
+      subscribe: (_, __, { pubSub }) => pubSub.subscribe("userDeleted"),
+    },
+  },
   Mutation: {
     // User
-    createUser: (parent, { data }) => {
+    createUser: (_, { data }, { pubSub }) => {
       const user = { id: nanoid(), ...data };
+
       users.push(user);
+      pubSub.publish("userCreated", { userCreated: user });
+
       return user;
     },
-    updateUser: (parent, { id, data }) => {
+    updateUser: (_, { id, data }, { pubSub }) => {
       const user_index = users.findIndex((user) => user.id === id);
       if (user_index === -1) {
         throw new Error("User not found.");
@@ -121,9 +143,12 @@ const resolvers = {
         ...users[user_index],
         ...data,
       });
+
+      pubSub.publish("userUpdated", { userUpdated: updated_user });
+
       return updated_user;
     },
-    deleteUser: (parent, { id }) => {
+    deleteUser: (_, { id }, { pubSub }) => {
       const user_index = users.findIndex((user) => user.id === id);
 
       if (user_index === -1) {
@@ -132,6 +157,8 @@ const resolvers = {
 
       const deleted_user = users[user_index];
       users.splice(user_index, 1);
+
+      pubSub.publish("userDeleted", { userDeleted: deleted_user });
 
       return deleted_user;
     },
@@ -142,12 +169,12 @@ const resolvers = {
     },
 
     // Post
-    createPost: (parents, { data }) => {
+    createPost: (_, { data }) => {
       const post = { id: nanoid(), ...data };
       posts.push(post);
       return post;
     },
-    updatePost: (parent, { id, data }) => {
+    updatePost: (_, { id, data }) => {
       const post_index = posts.findIndex((post) => post.id === id);
       if (post_index === -1) {
         throw new Error("Post not found.");
@@ -159,7 +186,7 @@ const resolvers = {
       });
       return updated_post;
     },
-    deletePost: (parent, { id }) => {
+    deletePost: (_, { id }) => {
       const post_index = posts.findIndex((post) => post.id === id);
 
       if (post_index === -1) {
@@ -178,12 +205,12 @@ const resolvers = {
     },
 
     // Comment
-    createComment: (parent, { data }) => {
+    createComment: (_, { data }) => {
       const comment = { id: nanoid(), ...data };
       comments.push(comment);
       return comment;
     },
-    updateComment: (parent, { id, data }) => {
+    updateComment: (_, { id, data }) => {
       const comment_index = comments.findIndex((comment) => comment.id === id);
       if (comment_index === -1) {
         throw new Error("Comment not found.");
@@ -195,7 +222,7 @@ const resolvers = {
       });
       return updated_comment;
     },
-    deleteComment: (parent, { id }) => {
+    deleteComment: (_, { id }) => {
       const comment_index = comments.findIndex((comment) => comment.id === id);
 
       if (comment_index === -1) {
@@ -216,16 +243,15 @@ const resolvers = {
   Query: {
     // user
     users: () => users,
-    user: (parent, args) => users.find((user) => user.id === args.id),
+    user: (_, args) => users.find((user) => user.id === args.id),
 
     // post
     posts: () => posts,
-    post: (parent, args) => posts.find((post) => post.id === args.id),
+    post: (_, args) => posts.find((post) => post.id === args.id),
 
     // comment
     comments: () => comments,
-    comment: (parent, args) =>
-      comments.find((comment) => comment.id === args.id),
+    comment: (_, args) => comments.find((comment) => comment.id === args.id),
   },
   User: {
     posts: (parent) => posts.filter((post) => post.user_id === parent.id),
@@ -242,8 +268,6 @@ const resolvers = {
     post: (parent) => posts.find((post) => post.id === parent.post_id),
   },
 };
-
-const pubSub = createPubSub();
 
 const yoga = createYoga({
   schema: createSchema({
