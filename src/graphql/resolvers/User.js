@@ -5,4 +5,4 @@ const User = {
     db.comments.filter((comment) => comment.user_id === parent.id),
 };
 
-export default User;
+export default { User };
