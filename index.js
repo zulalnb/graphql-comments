@@ -1,5 +1,11 @@
 import { createServer } from "node:http";
-import { createPubSub, createSchema, createYoga } from "graphql-yoga";
+import {
+  createPubSub,
+  createSchema,
+  createYoga,
+  filter,
+  pipe,
+} from "graphql-yoga";
 
 import { nanoid } from "nanoid";
 
@@ -109,13 +115,13 @@ const typeDefs = `#graphql
     userDeleted: User!
 
     # Post
-    postCreated: Post!
+    postCreated(user_id: ID): Post!
     postUpdated: Post!
     postDeleted: Post!
     postCount: Int!
 
     # Comment
-    commentCreated: Comment!
+    commentCreated(post_id: ID): Comment!
     commentUpdated: Comment!
     commentDeleted: Comment!
   }
@@ -138,7 +144,13 @@ const resolvers = {
 
     // Post
     postCreated: {
-      subscribe: (_, __, { pubSub }) => pubSub.subscribe("postCreated"),
+      subscribe: (_, args, { pubSub }) =>
+        pipe(
+          pubSub.subscribe("postCreated"),
+          filter((payload) =>
+            args.user_id ? payload.postCreated.user_id === args.user_id : true
+          )
+        ),
     },
     postUpdated: {
       subscribe: (_, __, { pubSub }) => pubSub.subscribe("postUpdated"),
@@ -157,7 +169,15 @@ const resolvers = {
 
     // Comment
     commentCreated: {
-      subscribe: (_, __, { pubSub }) => pubSub.subscribe("commentCreated"),
+      subscribe: (_, args, { pubSub }) =>
+        pipe(
+          pubSub.subscribe("commentCreated"),
+          filter((payload) =>
+            args.post_id
+              ? payload.commentCreated.post_id === args.post_id
+              : true
+          )
+        ),
     },
     commentUpdated: {
       subscribe: (_, __, { pubSub }) => pubSub.subscribe("commentUpdated"),
