@@ -117,8 +117,6 @@ const Mutation = {
     return updated_comment;
   },
   deleteComment: (_, { id }, { pubSub, db }) => {
-    console.log(db.comments);
-
     const comment_index = db.comments.findIndex((comment) => comment.id === id);
 
     if (comment_index === -1) {
