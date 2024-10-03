@@ -13,7 +13,9 @@
   "dependencies": {
     "@apollo/server": "^4.11.0",
     "graphql": "^16.9.0",
+    "graphql-redis-subscriptions": "^2.6.1",
     "graphql-yoga": "^5.7.0",
+    "ioredis": "^5.4.1",
     "nanoid": "^5.0.7"
   }
 }

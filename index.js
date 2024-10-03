@@ -6,6 +6,7 @@ import {
   filter,
   pipe,
 } from "graphql-yoga";
+import pubSub from "./pubSub.js";
 
 import { nanoid } from "nanoid";
 
@@ -127,43 +128,41 @@ const typeDefs = `#graphql
   }
 `;
 
-const pubSub = createPubSub();
-
 const resolvers = {
   Subscription: {
     // User
     userCreated: {
-      subscribe: (_, __, { pubSub }) => pubSub.subscribe("userCreated"),
+      subscribe: (_, __, { pubSub }) => pubSub.asyncIterator("userCreated"),
     },
     userUpdated: {
-      subscribe: (_, __, { pubSub }) => pubSub.subscribe("userUpdated"),
+      subscribe: (_, __, { pubSub }) => pubSub.asyncIterator("userUpdated"),
     },
     userDeleted: {
-      subscribe: (_, __, { pubSub }) => pubSub.subscribe("userDeleted"),
+      subscribe: (_, __, { pubSub }) => pubSub.asyncIterator("userDeleted"),
     },
 
     // Post
     postCreated: {
       subscribe: (_, args, { pubSub }) =>
         pipe(
-          pubSub.subscribe("postCreated"),
+          pubSub.asyncIterator("postCreated"),
           filter((payload) =>
             args.user_id ? payload.postCreated.user_id === args.user_id : true
           )
         ),
     },
     postUpdated: {
-      subscribe: (_, __, { pubSub }) => pubSub.subscribe("postUpdated"),
+      subscribe: (_, __, { pubSub }) => pubSub.asyncIterator("postUpdated"),
     },
     postDeleted: {
-      subscribe: (_, __, { pubSub }) => pubSub.subscribe("postDeleted"),
+      subscribe: (_, __, { pubSub }) => pubSub.asyncIterator("postDeleted"),
     },
     postCount: {
       subscribe: (_, __, { pubSub }) => {
         setTimeout(() => {
           pubSub.publish("postCount", { postCount: posts.length });
         });
-        return pubSub.subscribe("postCount");
+        return pubSub.asyncIterator("postCount");
       },
     },
 
@@ -171,7 +170,7 @@ const resolvers = {
     commentCreated: {
       subscribe: (_, args, { pubSub }) =>
         pipe(
-          pubSub.subscribe("commentCreated"),
+          pubSub.asyncIterator("commentCreated"),
           filter((payload) =>
             args.post_id
               ? payload.commentCreated.post_id === args.post_id
@@ -180,10 +179,10 @@ const resolvers = {
         ),
     },
     commentUpdated: {
-      subscribe: (_, __, { pubSub }) => pubSub.subscribe("commentUpdated"),
+      subscribe: (_, __, { pubSub }) => pubSub.asyncIterator("commentUpdated"),
     },
     commentDeleted: {
-      subscribe: (_, __, { pubSub }) => pubSub.subscribe("commentDeleted"),
+      subscribe: (_, __, { pubSub }) => pubSub.asyncIterator("commentDeleted"),
     },
   },
   Mutation: {
