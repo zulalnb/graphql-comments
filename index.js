@@ -1,11 +1,5 @@
 import { createServer } from "node:http";
-import {
-  createPubSub,
-  createSchema,
-  createYoga,
-  filter,
-  pipe,
-} from "graphql-yoga";
+import { createSchema, createYoga, filter, pipe } from "graphql-yoga";
 import pubSub from "./pubSub.js";
 
 import { nanoid } from "nanoid";

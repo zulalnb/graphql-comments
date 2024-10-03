@@ -12,6 +12,7 @@
   "type": "module",
   "dependencies": {
     "@apollo/server": "^4.11.0",
+    "dotenv": "^16.4.5",
     "graphql": "^16.9.0",
     "graphql-redis-subscriptions": "^2.6.1",
     "graphql-yoga": "^5.7.0",
