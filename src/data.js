@@ -20,6 +20,7 @@ const posts = [
     description:
       "Lorem ipsum dolor sit amet consectetur adipisicing elit. Reprehenderit provident eum in aut doloremque saepe nulla recusandae expedita accusamus sint. Minus similique dolorem harum est esse aliquam cumque ipsam accusamus!",
     user_id: "1",
+    cover: "https://images.unsplash.com/photo-1719937051157-d3d81cc28e86",
   },
   {
     id: "2",
@@ -27,6 +28,7 @@ const posts = [
     description:
       "It is a long established fact that a reader will be distracted by the readable content of a page when looking at its layout.",
     user_id: "1",
+    cover: "https://images.unsplash.com/photo-1527689368864-3a821dbccc34",
   },
   {
     id: "3",
@@ -34,6 +36,7 @@ const posts = [
     description:
       "The standard chunk of Lorem Ipsum used since the 1500s is reproduced below for those interested.",
     user_id: "2",
+    cover: "https://images.unsplash.com/photo-1480497490787-505ec076689f",
   },
 ];
 
