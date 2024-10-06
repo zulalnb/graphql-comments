@@ -48,7 +48,7 @@ const Mutation = {
   // Post
   createPost: (_, { data }, { pubSub, db }) => {
     const post = { id: nanoid(), ...data };
-    db.posts.push(post);
+    db.posts.unshift(post);
 
     pubSub.publish("postCreated", { postCreated: post });
     pubSub.publish("postCount", { postCount: db.posts.length });
