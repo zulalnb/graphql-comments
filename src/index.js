@@ -26,6 +26,7 @@ const yoga = createYoga({
     // Enable WebSockets in GraphiQL
     subscriptionsProtocol: "WS",
   },
+  maskedErrors: false,
 });
 
 // Create the HTTP server
