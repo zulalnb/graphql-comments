@@ -32,7 +32,7 @@ input CreatePostInput {
   description: String
   short_description: String
   cover: String
-  user_id: ID!
+  user: ID!
 }
 
 input UpdatePostInput {
