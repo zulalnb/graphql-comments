@@ -7,6 +7,16 @@ const CommentSchema = new Schema({
     type: String,
     required: true,
   },
+  user: {
+    type: Schema.Types.ObjectId,
+    ref: "User",
+    required: true,
+  },
+  post: {
+    type: Schema.Types.ObjectId,
+    required: true,
+    ref: "Post",
+  },
 });
 
 export default mongoose.model("Comment", CommentSchema);

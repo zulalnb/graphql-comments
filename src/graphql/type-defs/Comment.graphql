@@ -19,8 +19,6 @@ type Subscription {
 type Comment {
   id: ID!
   text: String!
-  post_id: ID!
-  user_id: ID!
   user: User!
   post: Post!
 }
