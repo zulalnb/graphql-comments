@@ -11,8 +11,16 @@ const Query = {
   },
 
   // post
-  posts: (_, __, { db }) => db.posts,
-  post: (_, args, { db }) => db.posts.find((post) => post.id === args.id),
+  posts: async (_, __, { _db }) => {
+    const posts = await _db.Post.find();
+    return posts;
+  },
+  post: async (_, args, { _db }) => {
+    // db.posts.find((post) => post.id === args.id);
+
+    const post = await _db.Post.findById(args.id);
+    return post;
+  },
 
   // comment
   comments: (_, __, { db }) => db.comments,
