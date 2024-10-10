@@ -13,6 +13,7 @@ import db from "./db.js";
 // Models
 import User from "./models/User.js";
 import Post from "./models/Post.js";
+import Comment from "./models/Comment.js";
 
 db();
 
@@ -20,7 +21,7 @@ db();
 const yoga = createYoga({
   schema,
   logging: true,
-  context: { pubSub, db: data, _db: { User, Post } },
+  context: { pubSub, db: data, _db: { User, Post, Comment } },
   graphiql: {
     // Enable WebSockets in GraphiQL
     subscriptionsProtocol: "WS",
