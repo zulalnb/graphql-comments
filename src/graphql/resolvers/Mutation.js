@@ -5,7 +5,7 @@ const Mutation = {
   createUser: (_, { data }, { pubSub, db }) => {
     const user = { id: nanoid(), ...data };
 
-    db.users.push(user);
+    db.users.unshift(user);
     pubSub.publish("userCreated", { userCreated: user });
 
     return user;

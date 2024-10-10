@@ -1,16 +1,20 @@
 import { createServer } from "node:http";
-import { createSchema, createYoga } from "graphql-yoga";
+import { createYoga } from "graphql-yoga";
 import { WebSocketServer } from "ws"; // Import WebSocket server
 import { useServer } from "graphql-ws/lib/use/ws"; // Import graphql-ws useServer function
 import pubSub from "./pubSub.js";
-import db from "./data.js";
 import schema from "./graphql/schema.js";
+// fake data
+import data from "./data.js";
+import db from "./db.js";
+
+db();
 
 // Create the Yoga app with WebSocket support for GraphiQL
 const yoga = createYoga({
   schema,
   logging: true,
-  context: { pubSub, db },
+  context: { pubSub, db: data },
   graphiql: {
     // Enable WebSockets in GraphiQL
     subscriptionsProtocol: "WS",
