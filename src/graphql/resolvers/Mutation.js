@@ -57,7 +57,7 @@ const Mutation = {
     const newPost = new _db.Post(data);
     const post = await newPost.save();
 
-    user.posts.push(post._id);
+    user.posts.push(post.id);
     user.save();
 
     const postCount = await _db.Post.countDocuments();
@@ -109,47 +109,79 @@ const Mutation = {
   },
 
   // Comment
-  createComment: (_, { data }, { pubSub, db }) => {
-    const comment = { id: nanoid(), ...data };
-    db.comments.push(comment);
+  createComment: async (_, { data }, { pubSub, _db }) => {
+    const user = await _db.User.findById(
+      new mongoose.Types.ObjectId(data.user)
+    );
+    if (!user) {
+      throw new Error("User not found.");
+    }
+    const post = await _db.Post.findById(
+      new mongoose.Types.ObjectId(data.post)
+    );
+    if (!post) {
+      throw new Error("Post not found.");
+    }
+
+    const newComment = new _db.Comment(data);
+    const comment = await newComment.save();
+
+    user.comments.push(comment.id);
+    post.comments.push(comment.id);
+
+    await user.save();
+    await post.save();
 
     pubSub.publish("commentCreated", { commentCreated: comment });
 
     return comment;
   },
-  updateComment: (_, { id, data }, { pubSub, db }) => {
-    const comment_index = db.comments.findIndex((comment) => comment.id === id);
-    if (comment_index === -1) {
+  updateComment: async (_, { id, data }, { pubSub, _db }) => {
+    const is_comment_exist = await _db.Comment.findById(id);
+    if (!is_comment_exist) {
       throw new Error("Comment not found.");
     }
 
-    const updated_comment = (db.comments[comment_index] = {
-      ...db.comments[comment_index],
-      ...data,
+    const updated_comment = await _db.Comment.findByIdAndUpdate(id, data, {
+      new: true,
     });
 
     pubSub.publish("commentUpdated", { commentUpdated: updated_comment });
 
     return updated_comment;
   },
-  deleteComment: (_, { id }, { pubSub, db }) => {
-    const comment_index = db.comments.findIndex((comment) => comment.id === id);
+  deleteComment: async (_, { id }, { pubSub, _db }) => {
+    const comment = await _db.Comment.findById(id);
 
-    if (comment_index === -1) {
+    if (!comment) {
       throw new Error("Comment not found.");
     }
 
-    const deleted_comment = db.comments[comment_index];
-    db.comments.splice(comment_index, 1);
+    const user = await _db.User.findById(comment.user);
+    const post = await _db.Post.findById(comment.post);
+
+    user.comments = user.comments.filter(
+      (comment_id) => comment_id.toString() !== id
+    );
+    post.comments = post.comments.filter(
+      (comment_id) => comment_id.toString() !== id
+    );
+
+    await user.save();
+    await post.save();
+
+    const deleted_comment = await _db.Comment.findByIdAndDelete(id);
 
     pubSub.publish("commentDeleted", { commentDeleted: deleted_comment });
 
     return deleted_comment;
   },
-  deleteAllComments: (_, __, { db }) => {
-    const length = db.comments.length;
-    db.comments.splice(0, length);
-    return { count: length };
+  deleteAllComments: async (_, __, { _db }) => {
+    const delete_comments = await _db.Comment.deleteMany();
+    await _db.User.updateMany({}, { $set: { comments: [] } });
+    await _db.Post.updateMany({}, { $set: { comments: [] } });
+
+    return { count: delete_comments.deletedCount };
   },
 };
 
