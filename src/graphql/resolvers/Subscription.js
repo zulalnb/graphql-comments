@@ -18,7 +18,7 @@ const Subscription = {
       pipe(
         pubSub.asyncIterator("postCreated"),
         filter((payload) =>
-          args.user_id ? payload.postCreated.user_id === args.user_id : true
+          args.user_id ? payload.postCreated.user === args.user_id : true
         )
       ),
   },
@@ -29,9 +29,10 @@ const Subscription = {
     subscribe: (_, __, { pubSub }) => pubSub.asyncIterator("postDeleted"),
   },
   postCount: {
-    subscribe: (_, __, { pubSub, db }) => {
+    subscribe: async (_, __, { pubSub, _db }) => {
+      const postCount = await _db.Post.countDocuments();
       setTimeout(() => {
-        pubSub.publish("postCount", { postCount: db.posts.length });
+        pubSub.publish("postCount", { postCount });
       });
       return pubSub.asyncIterator("postCount");
     },
@@ -43,7 +44,7 @@ const Subscription = {
       pipe(
         pubSub.asyncIterator("commentCreated"),
         filter((payload) =>
-          args.post_id ? payload.commentCreated.post_id === args.post_id : true
+          args.post_id ? payload.commentCreated.post === args.post_id : true
         )
       ),
   },

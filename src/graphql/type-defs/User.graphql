@@ -17,7 +17,7 @@ type Subscription {
 }
 
 type User {
-  id: ID!
+  _id: ID!
   fullName: String!
   age: Int!
   profile_photo: String
