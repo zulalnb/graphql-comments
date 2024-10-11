@@ -1,5 +1,4 @@
 import mongoose from "mongoose";
-import { nanoid } from "nanoid";
 
 const Mutation = {
   // User
@@ -47,9 +46,7 @@ const Mutation = {
 
   // Post
   createPost: async (_, { data }, { pubSub, _db }) => {
-    const user = await _db.User.findById(
-      new mongoose.Types.ObjectId(data.user)
-    );
+    const user = await _db.User.findById(data.user);
     if (!user) {
       throw new Error("User not found.");
     }
@@ -88,9 +85,29 @@ const Mutation = {
       throw new Error("Post not found.");
     }
 
-    const user = await _db.User.findById(post.user);
-    user.posts = user.posts.filter((post_id) => post_id.toString() !== id);
-    user.save();
+    const comments = await _db.Comment.find({ post: id });
+    const user_ids = [
+      ...new Set(comments.map((comment) => comment.user.toString())),
+    ];
+
+    await Promise.all(
+      user_ids.map(async (user_id) => {
+        const user = await _db.User.findById(user_id);
+        user.comments = user.comments.filter(
+          (commentId) =>
+            !comments.find(
+              (comment) => comment._id.toString() === commentId.toString()
+            )
+        );
+        await user.save();
+      })
+    );
+
+    const owner = await _db.User.findById(post.user);
+    owner.posts = owner.posts.filter((post_id) => post_id.toString() !== id);
+    owner.save();
+
+    await _db.Comment.deleteMany({ post: id });
 
     const postCount = await _db.Post.countDocuments();
     const deleted_post = await _db.Post.findByIdAndDelete(id);
@@ -102,7 +119,10 @@ const Mutation = {
   },
   deleteAllPosts: async (_, __, { pubSub, _db }) => {
     const delete_posts = await _db.Post.deleteMany();
+    await _db.Comment.deleteMany();
+
     await _db.User.updateMany({}, { $set: { posts: [] } });
+    await _db.User.updateMany({}, { $set: { comments: [] } });
 
     pubSub.publish("postCount", { postCount: delete_posts.deletedCount });
     return { count: delete_posts.deletedCount };
@@ -110,15 +130,11 @@ const Mutation = {
 
   // Comment
   createComment: async (_, { data }, { pubSub, _db }) => {
-    const user = await _db.User.findById(
-      new mongoose.Types.ObjectId(data.user)
-    );
+    const user = await _db.User.findById(data.user);
     if (!user) {
       throw new Error("User not found.");
     }
-    const post = await _db.Post.findById(
-      new mongoose.Types.ObjectId(data.post)
-    );
+    const post = await _db.Post.findById(data.post);
     if (!post) {
       throw new Error("Post not found.");
     }
